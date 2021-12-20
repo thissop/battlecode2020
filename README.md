@@ -1,4 +1,12 @@
-# Battlecode 2020 Scaffold
+# Battlecode 2020 
+
+## Notes
+
+### Misc. 
+
+* I can test my bot against other bots from 2020 by just copying their code from GitHub and testing it against mine haha
+
+## From original README: 
 
 This is the Battlecode 2020 scaffold, containing an `examplefuncsplayer`. Read https://2020.battlecode.org/getting-started!
 
