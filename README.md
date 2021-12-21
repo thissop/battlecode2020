@@ -5,6 +5,7 @@
 ### Misc. 
 
 * I can test my bot against other bots from 2020 by just copying their code from GitHub and testing it against mine haha
+* So apparently the bit shift operation ```1 << n``` equals ```2^n``` ... this leads me to think that if bytecode costs ever become a concern for us this year, Miles could investigate and implement some shortcuts like this above bit shift one (I remember him talking about similiar kinds  of things on a couple occasions). 
 
 ## From original README: 
 

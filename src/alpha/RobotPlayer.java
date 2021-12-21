@@ -79,65 +79,90 @@ public strictfp class RobotPlayer {
     static void runHQ() throws GameActionException {
         // Only make certain amount of miners
         if (num_miners<1) {
-            for (Direction dir : directions) {
-                if (tryBuild(RobotType.MINER, dir)) {
-                    num_miners++;
-                }
+            if (tryBuild(RobotType.MINER, randomDirection())) {
+                num_miners++;
             }
         }
     }
 
+    /* FIX BELOW! --> build ds at square dist = 5 from hq */
     static void runMiner() throws GameActionException {
+        // fix it, so it builds ds in one of the eight good, closer locations...use squared dist
 
+        // evaluates if number of design schools < 1; goal is to build one
         if (num_design_schools<1) {
+            boolean made_design_school = false;
+
+            // evaluates if hq_loq is unknown
             if (hq_loc==null) {
                 MapLocation test_loc = find_hq();
+
+                // if hq_loq is found
                 if (test_loc!=null) {
                     hq_loc = test_loc;
-                    int dist_to_hq = calc_dist(rc.getLocation(), hq_loc);
-                    if (2 < dist_to_hq && dist_to_hq <= 8) { // only build if within radius of hq
-                        if (num_design_schools<1) { // only build if num design schools < 1
-                            Direction ds_build_dir = rc.getLocation().directionTo(hq_loc).opposite();
-                            if (tryBuild(RobotType.DESIGN_SCHOOL, ds_build_dir)) {
-                                System.out.println("I made a design school!");
-                                num_design_schools++;
+
+                    // if rc distance to hq is > 1 search for location to build design school; else move away from hq
+                    if (rc.getLocation().distanceSquaredTo(hq_loc)>1) {
+                        // build in location that is at 5 distance -- only if distance to hq > 1 (else move away from hq)
+                        for (Direction dir : directions) {
+                            MapLocation test_spot = rc.adjacentLocation(dir);
+                            int test_dist = hq_loc.distanceSquaredTo(test_spot);
+                            if (test_dist == 5) {
+                                if (tryBuild(RobotType.DESIGN_SCHOOL, dir)) {
+                                    System.out.println("I made a design school!");
+                                    num_design_schools++;
+                                    made_design_school = true;
+                                    break;
+                                }
                             }
                         }
                     }
                     else {
-                        if (tryMove(randomDirection())) {
-                            System.out.println("I moved away from HQ!");
+                        if (tryMove(rc.getLocation().directionTo(hq_loc).opposite())) {
+                            System.out.println("I was too close to HQ, so I move away from it.");
                         }
                     }
                 }
+
+                // else if hq loq was not known initially and is not found afterwards ... can be ignored for now
                 else {
                     if (tryMove(randomDirection())) {
-                        System.out.println("I know where hq is but I moved!");
+                        System.out.println("I still don't know where hq is so I moved!");
                     }
-
                 }
 
             }
 
+            // below evaluates if hq_loq is known at beginning ... should get copied from above
             else {
-                int dist_to_hq = calc_dist(rc.getLocation(), hq_loc);
-                if (2 < dist_to_hq && dist_to_hq <= 8) { // only build if within radius of hq
-                    if (num_design_schools<1) { // only build if num design schools < 1
-                        Direction ds_build_dir = rc.getLocation().directionTo(hq_loc).opposite();
-                        if (tryBuild(RobotType.DESIGN_SCHOOL, ds_build_dir)) {
-                            System.out.println("I made a design school!");
-                            num_design_schools++;
+                // if rc distance to hq is > 1 search for location to build design school; else move away from hq
+                if (rc.getLocation().distanceSquaredTo(hq_loc)>1) {
+                    // build in location that is at 5 distance -- only if distance to hq > 1 (else move away from hq)
+                    for (Direction dir : directions) {
+                        MapLocation test_spot = rc.adjacentLocation(dir);
+                        int test_dist = hq_loc.distanceSquaredTo(test_spot);
+
+                        System.out.println(rc.getLocation() + " " + test_spot + " " + test_dist);
+
+                        if (test_dist == 5) {
+                            if (tryBuild(RobotType.DESIGN_SCHOOL, dir)) {
+                                System.out.println("I made a design school!");
+                                num_design_schools++;
+                                made_design_school = true;
+                                break;
+                            }
                         }
                     }
                 }
                 else {
-                    if (tryMove(randomDirection())) {
-                        System.out.println("I know where HQ is but I moved away!");
+                    if (tryMove(rc.getLocation().directionTo(hq_loc).opposite())) {
+                        System.out.println("I was too close to HQ, so I move away from it.");
                     }
                 }
             }
         }
 
+        // below evaluates if num design schools is > 0 ... can be ignored for now
         else {
             if (tryMove(randomDirection()))
                 System.out.println("I moved!");
@@ -153,132 +178,57 @@ public strictfp class RobotPlayer {
                     System.out.println("I mined soup! " + rc.getSoupCarrying());
         }
 
-
-        /* TURTLE PLAN
-        1. get location of hq
-        2.  if current msd from hq is 2 < msd <= 8 (else move randomly, mine soup)
-        3.  if ds number < 1 (else move randomly, mine soup)
-        4. build ds at at random direction nearby
-
-        - if ds < 1 then go back to refine soup? need to make refinery after ds >=1
-
-        - after turtling strategy is complete, add on to this.
-
-         */
-        /*
-        tryBlockchain();
-        tryMove(randomDirection());
-        if (tryMove(randomDirection()))
-            System.out.println("I moved!");
-        // tryBuild(randomSpawnedByMiner(), randomDirection());
-        for (Direction dir : directions)
-            tryBuild(RobotType.FULFILLMENT_CENTER, dir);
-        for (Direction dir : directions)
-            if (tryRefine(dir))
-                System.out.println("I refined soup! " + rc.getTeamSoup());
-        for (Direction dir : directions)
-            if (tryMine(dir))
-                System.out.println("I mined soup! " + rc.getSoupCarrying());
-
-    */
     }
 
     static void runDesignSchool() throws GameActionException {
-        /* Only make intitial 8 for turtle bot*/
+        /* Only make initial 8 for turtle bot*/
         if (num_landscapers<1) {
-            if (tryBuild(RobotType.LANDSCAPER, randomDirection())) {
+            if (tryBuild(RobotType.LANDSCAPER, randomDirection())) { // change this back to iteration through directions not random
                 System.out.println("I made a landscaper!");
                 num_landscapers++;
             }
         }
     }
 
+    /* I believe runLandscaper() is good */
     static void runLandscaper() throws GameActionException {
         if (hq_loc==null) {
             MapLocation test_loc = find_hq();
-
-            // calculate distance to HQ
-
-            //int distance_to_hq = calc_dist()
-
             if (test_loc != null) {
                 hq_loc = test_loc;
-                // single bot rotate dig deposit code
-                int distance_to_hq = calc_dist(rc.getLocation(), hq_loc);
+                int distance_to_hq = calc_square_dist(rc.getLocation(), hq_loc);
                 if (distance_to_hq<=2) {
-                    if (solo_landscaper_loop(distance_to_hq)) {
+                    if(solo_landscaper_loop(distance_to_hq)) {
                         System.out.println("I did a step in the single landscaper loop.");
                     }
-                }
-
-                else {
-                    if (tryMove(rc.getLocation().directionTo(hq_loc))) {
-                        System.out.println("I moved towards HQ!");
-                    }
                     else {
-                        if (tryMove(randomDirection())) {
-                            System.out.println("I couldn't move towards HQ, so I moved randomly.");
-                        }
+                        goToHQ();
                     }
+                }
+                else {
+                    goToHQ();
                 }
             }
-
             else {
                 if (tryMove(randomDirection())) {
                     System.out.println(("I don't know where HQ is (and I couldn't find it) so I moved randomly."));
                 }
             }
         }
-
         else {
-
-            int distance_to_hq = calc_dist(rc.getLocation(), hq_loc);
-
+            int distance_to_hq = calc_square_dist(rc.getLocation(), hq_loc);
             if (distance_to_hq<=2) {
                 if(solo_landscaper_loop(distance_to_hq)) {
                     System.out.println("I did a step in the single landscaper loop.");
                 }
-            }
-
-            else {
-                if (tryMove(rc.getLocation().directionTo(hq_loc))) {
-                    System.out.println("I moved towards HQ!");
-                }
                 else {
-                    if (tryMove(randomDirection())) {
-                        System.out.println("I couldn't move towards HQ, so I moved randomly.");
-                    }
+                    goToHQ();
                 }
             }
-        }
-
-
-        /*
-        if (hq_loc==null) {
-            MapLocation test_loc = find_hq();
-            if (test_loc != null) {
-
-
+            else {
+                goToHQ();
             }
         }
-        */
-
-        /* PLAN TO EXECUTE
-        1. locate HQ
-        2. check if self is currently within msd of 1 <= msd <= 2 of HQ
-        2.
-            a. if within msd, repeat process:
-                i. try to dig in opposite direction of hq if holding < 1 dirt
-                ii. if holding > 1 dirt, deposit dirt on current block
-
-        2.
-            b. else, repeat process:
-                i. try to move in direction of an empty block within radius of hq
-                ii. else, move in random direction
-
-         - To implement after that ^^ : dig in the block one over or rotated from the earlier block and deposit
-
-         */
     }
 
     /* Robots I have not modified yet */
@@ -336,9 +286,16 @@ public strictfp class RobotPlayer {
         return hq_location;
     }
 
-    /* Return manhattan distance between two points */
+    /* Return manhattan distance (not square) between two points */
     static int calc_dist(MapLocation point_1, MapLocation point_2) {
         return Math.abs(point_1.x-point_2.x)+Math.abs(point_1.y-point_2.y);
+    }
+
+    /* Return manhattan squared distance between two points */ /* replace this with MapLocation/distanceSquaredTo prob */
+    static int calc_square_dist(MapLocation point_1, MapLocation point_2) {
+        int d_x = (int) Math.pow(Math.abs(point_1.x-point_2.x), 2);
+        int d_y = (int) Math.pow(Math.abs(point_1.y-point_2.y), 2);
+        return d_x+d_y;
     }
 
     /* run single landscaper loop around hq given loc is known */
@@ -563,6 +520,18 @@ public strictfp class RobotPlayer {
              }
          }
          return task_accomplished;
+    }
+
+    /* Try to move towards HQ, else move randomly */
+    static void goToHQ() throws GameActionException {
+        if (tryMove(rc.getLocation().directionTo(hq_loc))) {
+            System.out.println("I moved towards HQ!");
+        }
+        else {
+            if (tryMove(randomDirection())) {
+                System.out.println("I couldn't move towards HQ, so I moved randomly.");
+            }
+        }
     }
 
     /* MISC. DEFAULT METHODS */

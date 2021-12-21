@@ -1,0 +1,8 @@
+notes:
+
+under the make ds routine, if miner distance to hq is less than 2, miner needs to move away from HQ
+
+* I think the thing our team should work on before december is a rush strategy now that we have (or will have) a decent turtle routine
+
+
+* after implementing miner routine should put different robot classes in separate files so I can have robot specific methods at bottom of files (e.g. miner method to search for location to build ds at)
